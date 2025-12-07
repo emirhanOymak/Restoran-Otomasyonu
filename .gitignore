@@ -1,0 +1,14 @@
+# --- Backend (Python) ---
+Back/venv/
+Back/__pycache__/
+Back/*.pyc
+Back/.env  
+
+# --- Frontend (React) ---
+front/node_modules/  
+front/build/
+front/.env
+
+# --- Genel ---
+.DS_Store
+*.log
