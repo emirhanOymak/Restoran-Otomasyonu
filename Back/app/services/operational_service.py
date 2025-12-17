@@ -1,13 +1,13 @@
 from app.models.operational import Masa
 from app import db
 
-# Fonksiyon isminin tam olarak bu olduğundan emin ol:
+
 def get_all_masalar():
-    # Tüm masaları veritabanından çeker
+    # SQL: SELECT * FROM masalar;
     return Masa.query.all()
 
 def create_masa(data):
-    # Yeni masa oluşturma mantığı
+    # SQL: INSERT INTO masalar (masa_adi, durum) VALUES (..., 'Boş');
     yeni_masa = Masa(
         masa_adi=data.get('masa_adi'),
         durum="Boş"

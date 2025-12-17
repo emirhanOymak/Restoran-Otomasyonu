@@ -17,7 +17,7 @@ function Login() {
       // Giriş Başarılı: Tarayıcıya "Giriş Yaptı" damgası vuruyoruz
       localStorage.setItem("isLoggedIn", "true");
       
-      toast.success("Hoşgeldiniz Yönetici! 🔓");
+      toast.success("Admin olarak giriş yapıldı! 🔓");
       navigate("/admin"); // Yönetim paneline yönlendir
     } else {
       toast.error("Hatalı Kullanıcı Adı veya Şifre! ⛔");

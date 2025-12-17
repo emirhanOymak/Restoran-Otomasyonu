@@ -1,5 +1,12 @@
 from app import db
 
+"""
+CREATE TABLE urun_kategorileri (
+    kategori_id INT IDENTITY(1,1) PRIMARY KEY,
+    kategori_adi NVARCHAR(100) NOT NULL,
+    resim_url NVARCHAR(255)
+);"""
+
 class UrunKategori(db.Model):
     __tablename__ = 'urun_kategorileri'
 
@@ -7,7 +14,6 @@ class UrunKategori(db.Model):
     kategori_adi = db.Column(db.String(100), nullable=False)
     sira_no = db.Column(db.Integer)
 
-    # İlişki: Bir kategorinin birden çok ürünü olabilir
     urunler = db.relationship('Urun', backref='kategori', lazy=True)
 
     def to_dict(self):
@@ -17,6 +23,18 @@ class UrunKategori(db.Model):
             "sira_no": self.sira_no
         }
 
+
+"""
+CREATE TABLE urunler (
+    urun_id INT IDENTITY(1,1) PRIMARY KEY,
+    kategori_id INT NOT NULL,
+    urun_adi NVARCHAR(100) NOT NULL,
+    aciklama NVARCHAR(MAX),
+    fiyat DECIMAL(10, 2) NOT NULL,
+    resim_url NVARCHAR(255),
+    aktif_mi BIT DEFAULT 1,
+    FOREIGN KEY (kategori_id) REFERENCES kategoriler(kategori_id)
+);"""
 class Urun(db.Model):
     __tablename__ = 'urunler'
 
@@ -29,7 +47,7 @@ class Urun(db.Model):
     kdv_orani = db.Column(db.Numeric(4, 2), default=18)
     aktif = db.Column(db.Boolean, default=True)
 
-    # İlişki: Bir ürünün birden çok opsiyonu olabilir (Acılı, Büyük Boy vb.)
+    
     opsiyonlar = db.relationship('UrunOpsiyon', backref='urun', lazy=True)
 
     def to_dict(self):
@@ -37,10 +55,20 @@ class Urun(db.Model):
             "urun_id": self.urun_id,
             "kategori_id": self.kategori_id,
             "urun_adi": self.urun_adi,
-            "fiyat": float(self.fiyat) if self.fiyat else 0, # Decimal'i float'a çeviriyoruz JSON için
+            "fiyat": float(self.fiyat) if self.fiyat else 0,
             "aktif": self.aktif
         }
 
+
+"""
+CREATE TABLE urun_opsiyonlari (
+    opsiyon_id INT IDENTITY(1,1) PRIMARY KEY,
+    urun_id INT NOT NULL,
+    opsiyon_adi NVARCHAR(100) NOT NULL,
+    fiyat_farki DECIMAL(10, 2) DEFAULT 0,
+    FOREIGN KEY (urun_id) REFERENCES urunler(urun_id)
+);
+"""
 class UrunOpsiyon(db.Model):
     __tablename__ = 'urun_opsiyonlari'
 

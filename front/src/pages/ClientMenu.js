@@ -86,7 +86,7 @@ function ClientMenu() {
             <button onClick={() => navigate('/')} className="btn btn-sm btn-outline-light me-3 border-0">
                 <FaArrowLeft size={20} />
             </button>
-            <span className="navbar-brand mb-0 h1 fw-bold">🔥 Lezzet Durağı</span>
+            <span className="navbar-brand mb-0 h1 fw-bold">Ana Sayfa</span>
         </div>
         <span className="badge bg-dark px-3 py-2">Masa: {masaBilgisi?.masa_adi}</span>
       </nav>

@@ -2,14 +2,14 @@ from app import db
 from app.models.sales import Siparis, SiparisDetay
 from app.models.products import Urun
 from app.models.inventory import Recete, Malzeme, StokHareket
-from app.models.operational import Masa # <-- Kritik Import
+from app.models.operational import Masa 
 from app.models.sales import Siparis, SiparisDetay, Odeme
 
 def create_siparis(data):
     masa_id = data.get('masa_id')
     items = data.get('items')
 
-    # 1. Sipariş Başlığını Oluştur
+    # SQL: INSERT INTO siparisler (masa_id, durum, tip, olusturma_tarihi) VALUES (..., 'Hazırlanıyor', 'Dine-in', GETDATE());
     yeni_siparis = Siparis(
         masa_id=masa_id,
         durum="Hazırlanıyor",
@@ -19,7 +19,7 @@ def create_siparis(data):
     db.session.add(yeni_siparis)
     db.session.flush() 
 
-    # 2. Masayı DOLU yap
+    # SQL: UPDATE masalar SET durum = 'Dolu' WHERE masa_id = ...;
     ilgili_masa = Masa.query.get(masa_id)
     if ilgili_masa:
         ilgili_masa.durum = "Dolu"
@@ -38,7 +38,7 @@ def create_siparis(data):
 
         satis_fiyati = urun.fiyat 
 
-        # 3. Sipariş Detayını Kaydet
+        # SQL: INSERT INTO siparis_detaylari (siparis_id, urun_id, adet, satis_fiyati...) VALUES (...);
         detay = SiparisDetay(
             siparis_id=yeni_siparis.siparis_id,
             urun_id=urun_id,
@@ -52,7 +52,7 @@ def create_siparis(data):
 
         toplam_tutar += (float(satis_fiyati) * adet)
 
-        # 4. Stok Düşme İşlemi
+        
         recete_listesi = Recete.query.filter_by(urun_id=urun_id).all()
         
         for r in recete_listesi:
@@ -60,10 +60,12 @@ def create_siparis(data):
             if malzeme:
                 dusulecek_miktar = float(r.birim_tuketim) * adet
                 
-                # Güvenli Float Çevrimi
-                mevcut_stok = float(malzeme.stok_miktar) if malzeme.stok_miktar else 0.0
-                malzeme.stok_miktar = mevcut_stok - dusulecek_miktar
                 
+                mevcut_stok = float(malzeme.stok_miktar) if malzeme.stok_miktar else 0.0
+                # SQL: SELECT * FROM receteler WHERE urun_id = ...;
+                # SQL: UPDATE malzemeler SET stok_miktar = stok_miktar - ... WHERE malzeme_id = ...;
+                malzeme.stok_miktar = mevcut_stok - dusulecek_miktar
+                # SQL: INSERT INTO stok_hareketleri (malzeme_id, tip, miktar, ref_tablo...) VALUES (..., 'Çıkış', ..., 'siparis_detaylari');
                 hareket = StokHareket(
                     malzeme_id=malzeme.malzeme_id,
                     tip="Çıkış",
@@ -74,7 +76,7 @@ def create_siparis(data):
                     birim_maliyet=malzeme.birim_maliyet
                 )
                 db.session.add(hareket)
-
+    # SQL: COMMIT TRANSACTION;
     db.session.commit()
     
     return {
@@ -84,13 +86,19 @@ def create_siparis(data):
     }
     
 def get_masa_hesabi(masa_id):
-    # Masadaki kapanmamış (aktif) siparişi bul
+    
+    # SELECT s.siparis_id, s.masa_id, d.urun_adi, d.adet, d.satis_fiyati
+    # FROM siparisler s
+    # JOIN siparis_detaylari d ON s.siparis_id = d.siparis_id
+    # JOIN urunler u ON d.urun_id = u.urun_id
+    # WHERE s.masa_id = ... AND s.durum = 'Hazırlanıyor';
+    
     aktif_siparis = Siparis.query.filter_by(masa_id=masa_id, durum="Hazırlanıyor").first()
     
     if not aktif_siparis:
         return None
 
-    # Sipariş detaylarını ve toplam tutarı hazırla
+    
     detaylar = []
     toplam = 0
     for detay in aktif_siparis.detaylar:
@@ -111,18 +119,18 @@ def get_masa_hesabi(masa_id):
 
 def odeme_yap_ve_kapat(data):
     masa_id = data.get('masa_id')
-    yontem = data.get('yontem') # Nakit, Kredi Kartı
+    yontem = data.get('yontem') 
     
-    # 1. Aktif Siparişi Bul
+    
     siparis = Siparis.query.filter_by(masa_id=masa_id, durum="Hazırlanıyor").first()
     if not siparis:
         raise Exception("Bu masada aktif bir sipariş bulunamadı.")
     
-    # 2. Toplam Tutarı Hesapla
+    
     hesap_bilgisi = get_masa_hesabi(masa_id)
     tutar = hesap_bilgisi['toplam_tutar']
-    
-    # 3. Ödemeyi Kaydet
+
+    # SQL: INSERT INTO odemeler (siparis_id, tutar, yontem, durum) VALUES (..., ..., 'Nakit', 'Ödendi');
     yeni_odeme = Odeme(
         siparis_id=siparis.siparis_id,
         tutar=tutar,
@@ -131,13 +139,13 @@ def odeme_yap_ve_kapat(data):
     )
     db.session.add(yeni_odeme)
     
-    # 4. Siparişi Kapat
+    # SQL: UPDATE siparisler SET durum = 'Kapandı' WHERE siparis_id = ...;
     siparis.durum = "Kapandı"
     
-    # 5. Masayı Boşa Çıkar
+    
     masa = Masa.query.get(masa_id)
     masa.durum = "Boş"
-    
+    # SQL: COMMIT TRANSACTION;
     db.session.commit()
     
     return {"mesaj": "Hesap ödendi, masa kapatıldı.", "odenen_tutar": tutar}    
