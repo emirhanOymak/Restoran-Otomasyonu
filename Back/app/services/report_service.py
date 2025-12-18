@@ -40,7 +40,22 @@ def get_dashboard_stats():
     top_products_data = [{"urun": i[0], "adet": i[1]} for i in en_cok_satanlar]
 
     # SQL: SELECT * FROM malzemeler WHERE stok_miktar <= kritik_seviye;
-    azalan_stoklar = Malzeme.query.filter(Malzeme.stok_miktar <= Malzeme.kritik_seviye).all()
+    #azalan_stoklar = Malzeme.query.filter(Malzeme.stok_miktar <= Malzeme.kritik_seviye).all()
+    
+    tum_malzemeler = Malzeme.query.all()
+    azalan_stoklar = []
+
+    for m in tum_malzemeler:
+        # Veritabanından gelen değerleri sayıya çevir
+        stok = float(m.stok_miktar) if m.stok_miktar else 0
+        kritik_db = float(m.kritik_seviye) if m.kritik_seviye else 0
+        
+        # Eğer veritabanında kritik seviye 0 girildiyse, sistem bunu varsayılan olarak 10 kabul etsin
+        limit = kritik_db if kritik_db > 0 else 10
+        
+        if stok <= limit:
+            azalan_stoklar.append(m)
+            
     low_stock_data = [{"malzeme": m.malzeme_adi, "stok": float(m.stok_miktar), "birim": m.birim} for m in azalan_stoklar]
 
     return {

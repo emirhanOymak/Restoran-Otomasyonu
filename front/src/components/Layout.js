@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaSignOutAlt } from 'react-icons/fa';
-import { FaHome, FaUtensils, FaChartLine, FaBoxOpen, FaQrcode } from 'react-icons/fa';
+import { FaHome, FaUtensils, FaChartLine, FaBoxOpen, FaQrcode,FaList,FaBookOpen } from 'react-icons/fa';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
 
 function Layout({ children }) {
   const location = useLocation();
@@ -14,6 +15,12 @@ function Layout({ children }) {
     navigate("/login"); // Login'e at
   };
 
+  const isPublicPage = 
+      location.pathname === '/' || 
+      location.pathname === '/login' || 
+      location.pathname === '/qr' || 
+      location.pathname.startsWith('/menu');
+      
   // --- MÜŞTERİ EKRANLARI (SIDEBAR YOK) ---
   if (location.pathname.startsWith('/menu') || location.pathname === '/qr') {
     return (
@@ -27,8 +34,10 @@ function Layout({ children }) {
 
   // --- YÖNETİCİ EKRANLARI (SIDEBAR VAR) ---
   const menuItems = [
-    { path: '/', name: 'Ana Sayfa', icon: <FaHome /> },
-    { path: '/admin', name: 'Yönetim Paneli', icon: <FaUtensils /> },
+    //{ path: '/', name: 'Ana Sayfa', icon: <FaHome /> },
+    { path: '/admin', name: 'Masa Yönetimi', icon: <FaUtensils /> },
+    { path: '/admin/products', name: 'Menü Yönetimi', icon: <FaList /> },
+    { path: '/admin/recipes', name: 'Tarif Defteri', icon: <FaBookOpen /> },
     { path: '/inventory', name: 'Stok Yönetimi', icon: <FaBoxOpen /> },
     { path: '/reports', name: 'Raporlar', icon: <FaChartLine /> },
     { path: '/qr', name: 'QR Kod Üret', icon: <FaQrcode /> },

@@ -1,13 +1,13 @@
 from app import db
-from app.models.inventory import Malzeme, StokHareket, Tedarikci, Gider
+from app.models.inventory import Malzeme, StokHareket, Gider, Recete
 
 def get_all_materials():
     malzemeler = Malzeme.query.all()
-    tedarikciler = Tedarikci.query.all()
+    
     
     return {
         "malzemeler": [m.to_dict() for m in malzemeler],
-        "tedarikciler": [{"id": t.tedarikci_id, "unvan": t.unvan} for t in tedarikciler]
+        
     }
 
 def add_stock_entry(data):
@@ -15,7 +15,6 @@ def add_stock_entry(data):
     miktar = float(data.get('miktar'))
     
  
-    tedarikci_id = data.get('tedarikci_id') or None 
     
 
     birim_fiyat = float(data.get('birim_fiyat'))
@@ -52,9 +51,8 @@ def add_stock_entry(data):
     db.session.add(hareket)
     db.session.flush()
 
-    # SQL: INSERT INTO giderler (tedarikci_id, tur, baslik, brut_tutar, tarih) VALUES (..., 'Satın Alma', ..., ..., GETDATE());
+    # SQL: INSERT INTO giderler ( tur, baslik, brut_tutar, tarih) VALUES (..., 'Satın Alma', ..., ..., GETDATE());
     yeni_gider = Gider(
-        tedarikci_id=tedarikci_id, 
         tur="Satın Alma",
         baslik=f"{malzeme.malzeme_adi} Alımı",
         brut_tutar=toplam_tutar,
@@ -70,3 +68,54 @@ def add_stock_entry(data):
     db.session.commit()
 
     return {"mesaj": "Stok girişi ve gider kaydı başarıyla yapıldı."}
+
+def get_recipe_by_product(urun_id):
+    # Bir ürünün reçetesindeki malzemeleri listeler
+    receteler = Recete.query.filter_by(urun_id=urun_id).all()
+    sonuc = []
+    for r in receteler:
+        malzeme = Malzeme.query.get(r.malzeme_id)
+        if malzeme:
+            sonuc.append({
+                "malzeme_id": r.malzeme_id,
+                "malzeme_adi": malzeme.malzeme_adi,
+                "birim": malzeme.birim,
+                "miktar": float(r.birim_tuketim)
+            })
+    return sonuc
+
+def update_product_recipe(urun_id, items):
+    # Önce eski reçeteyi temizle (En temiz yöntem silip yeniden eklemektir)
+    Recete.query.filter_by(urun_id=urun_id).delete()
+    
+    # Yeni malzemeleri ekle
+    yeni_kayitlar = []
+    for item in items:
+        yeni_recete = Recete(
+            urun_id=urun_id,
+            malzeme_id=item['malzeme_id'],
+            birim_tuketim=item['miktar']
+        )
+        yeni_kayitlar.append(yeni_recete)
+    
+    db.session.add_all(yeni_kayitlar)
+    db.session.commit()
+    return {"mesaj": "Reçete güncellendi."}
+
+def create_new_material(data):
+    # Aynı isimde malzeme var mı kontrol et
+    mevcut = Malzeme.query.filter_by(malzeme_adi=data.get('malzeme_adi')).first()
+    if mevcut:
+        raise Exception("Bu isimde bir malzeme zaten var.")
+
+    yeni_malzeme = Malzeme(
+        malzeme_adi=data.get('malzeme_adi'),
+        birim=data.get('birim'), # 'Kg', 'Lt', 'Adet' vb.
+        kritik_seviye=data.get('kritik_seviye', 10),
+        stok_miktar=0, # İlk oluşturulduğunda stok 0 olsun
+        birim_maliyet=0
+    )
+    
+    db.session.add(yeni_malzeme)
+    db.session.commit()
+    return yeni_malzeme

@@ -10,6 +10,8 @@ import ClientMenu from './pages/ClientMenu';
 import Reports from './pages/Reports';
 import Inventory from './pages/Inventory';
 import QRScanner from './pages/QRScanner';
+import AdminMenu from './pages/AdminMenu';
+import RecipeBook from './pages/RecipeBook';
 
 function App() {
   return (
@@ -34,6 +36,14 @@ function App() {
           <Route path="/inventory" element={
             <PrivateRoute> <Inventory /> </PrivateRoute>
           } />
+
+          <Route path="/admin/products" element={
+             <PrivateRoute> <AdminMenu /> </PrivateRoute>
+           } />
+
+           <Route path="/admin/recipes" element={
+             <PrivateRoute> <RecipeBook /> </PrivateRoute>
+           } />
 
         </Routes>
       </Layout>

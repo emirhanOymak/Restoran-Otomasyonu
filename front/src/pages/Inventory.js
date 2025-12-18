@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { FaBoxOpen, FaPlusCircle, FaExclamationTriangle } from 'react-icons/fa';
+import { FaBoxOpen, FaPlusCircle, FaExclamationTriangle, FaTags } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
 function Inventory() {
   const [malzemeler, setMalzemeler] = useState([]);
-  const [tedarikciler, setTedarikciler] = useState([]);
   const [yukleniyor, setYukleniyor] = useState(true);
   
   // Form State
@@ -14,12 +13,12 @@ function Inventory() {
   const [seciliTedarikci, setSeciliTedarikci] = useState("");
   const [miktar, setMiktar] = useState("");
   const [fiyat, setFiyat] = useState("");
+  const [yeniMalzemeModalAcik, setYeniMalzemeModalAcik] = useState(false);
 
   const veriGetir = () => {
     axios.get('http://127.0.0.1:5000/api/inventory/materials')
       .then(res => {
         setMalzemeler(res.data.malzemeler);
-        setTedarikciler(res.data.tedarikciler);
         setYukleniyor(false);
       })
       .catch(err => {
@@ -48,7 +47,6 @@ function Inventory() {
     e.preventDefault();
     const payload = {
       malzeme_id: seciliMalzeme,
-      tedarikci_id: seciliTedarikci || "",
       miktar: miktar,
       birim_fiyat: fiyat,
       aciklama: "Web Panel Girişi"
@@ -65,12 +63,33 @@ function Inventory() {
       .catch(err => toast.error("Hata: " + (err.response?.data?.hata || err.message)));
   };
 
+  const yeniMalzemeKaydet = (e) => {
+    e.preventDefault();
+    axios.post('http://127.0.0.1:5000/api/inventory/material/add', yeniMalzemeForm)
+        .then(() => {
+            toast.success("Yeni Malzeme Tanımlandı! 🎉");
+            setYeniMalzemeModalAcik(false);
+            setYeniMalzemeForm({ malzeme_adi: "", birim: "Adet", kritik_seviye: 10 }); // Formu temizle
+            veriGetir(); // Listeyi yenile ki yeni malzeme dropdown'a gelsin
+        })
+        .catch(err => toast.error("Hata: " + (err.response?.data?.hata || err.message)));
+  };
+
+  const [yeniMalzemeForm, setYeniMalzemeForm] = useState({
+    malzeme_adi: "",
+    birim: "Adet",
+    kritik_seviye: 10
+  });
+
   if (yukleniyor) return <div className="text-center mt-5"><div className="spinner-border text-primary"/> Yükleniyor...</div>;
 
   return (
     <div className="container mt-4 mb-5">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="fw-bold text-dark"><FaBoxOpen className="me-2"/> Stok Yönetimi</h2>
+        <button className="btn btn-primary me-2" onClick={() => setYeniMalzemeModalAcik(true)}>
+            <FaTags className="me-2"/> Yeni Malzeme Tanımla
+        </button>
         <Link to="/" className="btn btn-outline-dark">🏠 Ana Menü</Link>
       </div>
 
@@ -111,15 +130,7 @@ function Inventory() {
                     </div>
                 </div>
 
-                <div className="mb-3">
-                  <label className="form-label small text-muted">Tedarikçi (Opsiyonel)</label>
-                  <select className="form-select form-select-sm" value={seciliTedarikci} onChange={e => setSeciliTedarikci(e.target.value)}>
-                    <option value="">Belirtilmedi</option>
-                    {tedarikciler.map(t => (
-                      <option key={t.id} value={t.id}>{t.unvan}</option>
-                    ))}
-                  </select>
-                </div>
+              
 
                 <button type="submit" className="btn btn-success w-100 py-2 fw-bold shadow-sm">
                     Stok Ekle
@@ -159,7 +170,54 @@ function Inventory() {
           </div>
         </div>
       </div>
+      {yeniMalzemeModalAcik && (
+        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <div className="modal-dialog">
+                <div className="modal-content">
+                    <div className="modal-header bg-primary text-white">
+                        <h5 className="modal-title">Yeni Malzeme Tanımla</h5>
+                        <button type="button" className="btn-close" onClick={() => setYeniMalzemeModalAcik(false)}></button>
+                    </div>
+                    <form onSubmit={yeniMalzemeKaydet}>
+                        <div className="modal-body">
+                            <div className="mb-3">
+                                <label className="form-label">Malzeme Adı</label>
+                                <input type="text" className="form-control" required placeholder="Örn: Zeytinyağı"
+                                    value={yeniMalzemeForm.malzeme_adi} 
+                                    onChange={e => setYeniMalzemeForm({...yeniMalzemeForm, malzeme_adi: e.target.value})} />
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label">Birim</label>
+                                <select className="form-select" value={yeniMalzemeForm.birim} 
+                                        onChange={e => setYeniMalzemeForm({...yeniMalzemeForm, birim: e.target.value})}>
+                                    <option value="Adet">Adet</option>
+                                    <option value="Kg">Kg</option>
+                                    <option value="Gr">Gr</option>
+                                    <option value="Lt">Lt</option>
+                                    <option value="Porsiyon">Porsiyon</option>
+                                    <option value="Paket">Paket</option>
+                                </select>
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label">Kritik Stok Seviyesi</label>
+                                <input type="number" className="form-control" 
+                                    value={yeniMalzemeForm.kritik_seviye} 
+                                    onChange={e => setYeniMalzemeForm({...yeniMalzemeForm, kritik_seviye: e.target.value})} />
+                                <small className="text-muted">Stok bu seviyenin altına düşerse uyarı verilir.</small>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-secondary" onClick={() => setYeniMalzemeModalAcik(false)}>İptal</button>
+                            <button type="submit" className="btn btn-primary">Kaydet</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+      )}
+      
     </div>
+    
   );
 }
 

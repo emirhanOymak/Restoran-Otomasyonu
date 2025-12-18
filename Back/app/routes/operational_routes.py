@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
+from app import db
 from app.services.operational_service import get_all_masalar, create_masa
-from app.schemas.operational import MasaSchema
+from app.schemas.operational import MasaSchema, Masa
 
 # Blueprint: URL gruplaması (Örn: /api/operational/...)
 op_bp = Blueprint('operational', __name__, url_prefix='/api/operational')
@@ -23,3 +24,22 @@ def add_masa():
     # many=False -> Tek kayıt dönüyoruz
     masa_schema = MasaSchema()
     return jsonify(masa_schema.dump(yeni_masa)), 201
+
+@op_bp.route('/cagir/<int:masa_id>', methods=['POST'])
+def garson_cagir(masa_id):
+    masa = Masa.query.get(masa_id)
+    if masa:
+        masa.servis_istiyor = True
+        db.session.commit()
+        return jsonify({"mesaj": "Garson çağrıldı."}), 200
+    return jsonify({"hata": "Masa bulunamadı"}), 404
+
+# --- YENİ: ÇAĞRIYI KAPATMA (Admin/Garson Tarafı) ---
+@op_bp.route('/cagir-iptal/<int:masa_id>', methods=['POST'])
+def garson_cagir_iptal(masa_id):
+    masa = Masa.query.get(masa_id)
+    if masa:
+        masa.servis_istiyor = False
+        db.session.commit()
+        return jsonify({"mesaj": "Çağrı yanıtlandı."}), 200
+    return jsonify({"hata": "Masa bulunamadı"}), 404

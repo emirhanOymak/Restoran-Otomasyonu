@@ -53,27 +53,6 @@ class Recete(db.Model):
     malzeme = db.relationship('Malzeme')
     urun = db.relationship('Urun')
 
-"""
-CREATE TABLE tedarikciler (
-    tedarikci_id INT IDENTITY(1,1) PRIMARY KEY,
-    unvan NVARCHAR(150) NOT NULL,
-    vergi_no NVARCHAR(20),
-    telefon NVARCHAR(30)
-);
-"""
-class Tedarikci(db.Model):
-    __tablename__ = 'tedarikciler'
-
-    tedarikci_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    unvan = db.Column(db.String(150), nullable=False)
-    vergi_no = db.Column(db.String(20))
-    telefon = db.Column(db.String(30))
-    
-    def to_dict(self):
-        return {
-            "tedarikci_id": self.tedarikci_id,
-            "unvan": self.unvan
-        }
 
 """
 CREATE TABLE stok_hareketleri (
@@ -111,7 +90,6 @@ class StokHareket(db.Model):
 """
 CREATE TABLE giderler (
     gider_id INT IDENTITY(1,1) PRIMARY KEY,
-    tedarikci_id INT,
     tur NVARCHAR(20), -- 'Satın Alma', 'Fatura'
     baslik NVARCHAR(150),
     brut_tutar DECIMAL(12, 2),
@@ -125,7 +103,6 @@ class Gider(db.Model):
     __tablename__ = 'giderler'
 
     gider_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    tedarikci_id = db.Column(db.Integer, db.ForeignKey('tedarikciler.tedarikci_id'))
     tur = db.Column(db.String(20)) 
     baslik = db.Column(db.String(150))
     brut_tutar = db.Column(db.Numeric(12, 2))

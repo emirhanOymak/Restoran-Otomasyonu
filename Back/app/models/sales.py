@@ -5,7 +5,6 @@ from datetime import datetime
 CREATE TABLE siparisler (
     siparis_id INT IDENTITY(1,1) PRIMARY KEY,
     masa_id INT,
-    musteri_id INT,
     tip NVARCHAR(20), -- 'Dine-in', 'Paket'
     durum NVARCHAR(20), -- 'Hazırlanıyor', 'Kapandı'
     olusturma_tarihi DATETIME DEFAULT GETDATE(),
@@ -19,7 +18,6 @@ class Siparis(db.Model):
 
     siparis_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     masa_id = db.Column(db.Integer, db.ForeignKey('masalar.masa_id'))
-    musteri_id = db.Column(db.Integer, db.ForeignKey('musteriler.musteri_id'))
     tip = db.Column(db.String(20)) 
     durum = db.Column(db.String(20)) 
     olusturma_tarihi = db.Column(db.DateTime, default=datetime.now)

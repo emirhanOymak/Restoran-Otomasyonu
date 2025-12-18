@@ -17,7 +17,7 @@ class Masa(db.Model):
     masa_kodu = db.Column(UNIQUEIDENTIFIER, server_default=text("NEWID()"), nullable=False)
     durum = db.Column(db.String(20), default='Boş')
     kisi_sayisi = db.Column(db.Integer, default=0)
-
+    servis_istiyor = db.Column(db.Boolean, default=False)
 
 
     def to_dict(self):
@@ -26,21 +26,9 @@ class Masa(db.Model):
             "masa_adi": self.masa_adi,
             "masa_kodu": str(self.masa_kodu), 
             "durum": self.durum,
-            "kisi_sayisi": self.kisi_sayisi
+            "kisi_sayisi": self.kisi_sayisi,
+            "servis_istiyor": self.servis_istiyor
         }
         
         
 
-class Musteri(db.Model):
-    __tablename__ = 'musteriler'
-
-    musteri_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    ad_soyad = db.Column(db.String(150))
-    telefon = db.Column(db.String(30))
-
-    def to_dict(self):
-        return {
-            "musteri_id": self.musteri_id,
-            "ad_soyad": self.ad_soyad,
-            "telefon": self.telefon
-        }

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import Swal from 'sweetalert2'; // <-- YENİ KÜTÜPHANE
+import Swal from 'sweetalert2'; 
+import { FaConciergeBell } from 'react-icons/fa'; 
 
 function AdminDashboard() {
   const [masalar, setMasalar] = useState([]);
@@ -31,7 +32,7 @@ function AdminDashboard() {
     }
   };
 
-  // --- MODERN ONAY PENCERESİ (SWEETALERT2) ---
+  
   const hesabiKapat = (yontem) => {
     Swal.fire({
       title: 'Hesabı Kapat?',
@@ -44,13 +45,13 @@ function AdminDashboard() {
       cancelButtonText: 'İptal'
     }).then((result) => {
       if (result.isConfirmed) {
-        // Kullanıcı "Evet" dedi, işlemi yap
+        
         axios.post('http://127.0.0.1:5000/api/sales/odeme-yap', {
           masa_id: seciliMasa.masa_id,
           yontem: yontem 
         })
         .then(res => {
-          // Başarılı olursa güzel bir onay kutusu göster
+          
           Swal.fire(
             'İşlem Tamam!',
             `Tahsilat: ${res.data.odenen_tutar} ₺ (${yontem})`,
@@ -65,7 +66,14 @@ function AdminDashboard() {
       }
     });
   };
-  // --------------------------------------------
+  const cagriKapat = (e, masa) => {
+    e.stopPropagation(); 
+    axios.post(`http://127.0.0.1:5000/api/operational/cagir-iptal/${masa.masa_id}`)
+        .then(() => {
+            toast.info(`${masa.masa_adi} çağrısı yanıtlandı.`);
+            masalariGetir(); // Listeyi güncelle
+        });
+  };
 
   return (
     <div className="container mt-4">
@@ -86,6 +94,15 @@ function AdminDashboard() {
                 >
                   {masa.masa_adi}
                   <div className="fs-6 fw-normal mt-1 opacity-75">{masa.durum}</div>
+                  {masa.servis_istiyor && (
+                    <div 
+                      onClick={(e) => cagriKapat(e, masa)}
+                      className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border border-light shadow-sm"
+                      style={{ cursor: 'pointer', zIndex: 10, padding: '10px' }}
+                    >
+                      <FaConciergeBell className="bell-animation" size={20}/>
+                    </div>
+                  )}
                   {masa.durum === 'Dolu' && (
                     <span className="position-absolute top-0 start-100 translate-middle p-2 bg-warning border border-light rounded-circle">
                       <span className="visually-hidden">Dolu</span>
@@ -153,6 +170,21 @@ function AdminDashboard() {
           )}
         </div>
       </div>
+
+      <style>{`
+          @keyframes ring {
+            0% { transform: rotate(0); }
+            10% { transform: rotate(30deg); }
+            20% { transform: rotate(0); }
+            80% { transform: rotate(0); }
+            90% { transform: rotate(-30deg); }
+            100% { transform: rotate(0); }
+          }
+          .bell-animation {
+              animation: ring 1s infinite ease-in-out;
+          }
+      `}</style>
+
     </div>
   );
 }

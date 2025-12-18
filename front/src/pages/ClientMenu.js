@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
-import { FaArrowLeft, FaPlus, FaMinus, FaTimes, FaShoppingCart } from 'react-icons/fa';
+import { FaArrowLeft, FaPlus, FaMinus, FaTimes, FaShoppingCart,FaConciergeBell } from 'react-icons/fa';
 
 function ClientMenu() {
   const { masaId } = useParams();
@@ -77,6 +78,20 @@ function ClientMenu() {
       });
   };
 
+  const garsonCagir = () => {
+    axios.post(`http://127.0.0.1:5000/api/operational/cagir/${masaId}`)
+        .then(() => {
+            Swal.fire({
+                title: 'Garson Çağrıldı! 🔔',
+                text: 'Ekip arkadaşlarımız birazdan masanızda olacaktır.',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        })
+        .catch(() => toast.error("Bağlantı hatası!"));
+  };
+
   return (
     <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh', paddingBottom: '120px' }}>
       
@@ -99,7 +114,7 @@ function ClientMenu() {
               <div key={kat.kategori_id} className="mb-5">
                 <h3 className="fw-bold text-dark border-start border-4 border-danger ps-3 mb-4">{kat.kategori_adi}</h3>
                 <div className="row g-3">
-                  {kat.urunler.map(urun => (
+                  {kat.urunler.filter(urun => urun.aktif).map(urun => (
                     <div key={urun.urun_id} className="col-6 col-lg-4">
                       <div className="card h-100 border-0 shadow-sm" style={{ cursor: 'pointer', borderRadius: '15px', overflow: 'hidden' }} onClick={() => urunTikla(urun)}>
                         <div style={{ height: '140px', backgroundImage: `url(${urun.resim_url || 'https://via.placeholder.com/300'})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
@@ -156,6 +171,8 @@ function ClientMenu() {
           </div>
         </div>
       </div>
+
+      
 
       {/* OPSİYON ve DETAY MODALI (Her Ürün İçin Açılır) */}
       {modalAcik && secilenUrun && (
@@ -227,6 +244,22 @@ function ClientMenu() {
           </div>
         </div>
       )}
+
+      <button 
+          onClick={garsonCagir}
+          className="btn btn-warning rounded-circle shadow-lg d-flex align-items-center justify-content-center"
+          style={{
+              position: 'fixed',
+              bottom: '20px',
+              right: '20px',
+              width: '70px',
+              height: '70px',
+              zIndex: 1000,
+              border: '4px solid white'
+          }}
+      >
+          <FaConciergeBell size={30} className="text-dark"/>
+      </button>
 
     </div>
   );

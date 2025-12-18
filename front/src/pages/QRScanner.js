@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { QRCodeSVG } from 'qrcode.react';
 import { FaQrcode, FaCamera, FaCheckCircle, FaBan, FaArrowLeft, FaTimes } from 'react-icons/fa';
 
 function QRScanner() {
@@ -53,8 +54,21 @@ function QRScanner() {
               border: '4px solid rgba(255,255,255,0.3)', 
               borderRadius: '20px', 
               position: 'relative',
-              boxShadow: '0 0 0 100vh rgba(0,0,0,0.8)' // Çerçeve dışını daha koyu karartır
+              boxShadow: '0 0 0 100vh rgba(0,0,0,0.8)', // Çerçeve dışını daha koyu karartır
+              display: 'flex',            // İçeriği esnek kutu yap
+              alignItems: 'center',       // Dikeyde ortala
+              justifyContent: 'center',   // Yatayda ortala
+              backgroundColor: 'rgba(255, 255, 255, 0.1)'
           }}>
+
+            <div style={{ opacity: 0.8 }}> {/* Biraz şeffaflık verelim ki kamera görüntüsü gibi dursun */}
+                <QRCodeSVG 
+                    value={`http://localhost:3000/menu/${secilenMasa?.masa_id}`} 
+                    size={200} 
+                    fgColor="#ffffff" // QR Beyaz olsun (Siyah zemin üzerinde)
+                    bgColor="transparent" 
+                />
+            </div>
             {/* Köşelerdeki Hareketli Çizgiler */}
             <div className="position-absolute top-0 start-0 border-top border-start border-success" style={{width: '40px', height: '40px', borderWidth: '5px!important'}}></div>
             <div className="position-absolute top-0 end-0 border-top border-end border-success" style={{width: '40px', height: '40px', borderWidth: '5px!important'}}></div>
@@ -79,6 +93,7 @@ function QRScanner() {
               box-shadow: 0 0 4px #0f0;
               position: absolute;
               top: 0;
+              z-index: 10;
               animation: scan 2s infinite linear;
             }
             @keyframes scan {

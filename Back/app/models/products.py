@@ -35,12 +35,14 @@ CREATE TABLE urunler (
     aktif_mi BIT DEFAULT 1,
     FOREIGN KEY (kategori_id) REFERENCES kategoriler(kategori_id)
 );"""
+
 class Urun(db.Model):
     __tablename__ = 'urunler'
 
     urun_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     kategori_id = db.Column(db.Integer, db.ForeignKey('urun_kategorileri.kategori_id'))
     urun_adi = db.Column(db.String(150), nullable=False)
+    aciklama = db.Column(db.String(255))
     barkod = db.Column(db.String(50))
     fiyat = db.Column(db.Numeric(10, 2), default=0)
     resim_url = db.Column(db.String)
@@ -56,6 +58,7 @@ class Urun(db.Model):
             "kategori_id": self.kategori_id,
             "urun_adi": self.urun_adi,
             "fiyat": float(self.fiyat) if self.fiyat else 0,
+            "aciklama": self.aciklama,
             "aktif": self.aktif
         }
 
